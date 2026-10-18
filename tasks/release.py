@@ -24,7 +24,7 @@ def main(version_str: str) -> None:
         raise RuntimeError(msg)
     repo.git.checkout("-B", f"release-{version}", upstream.refs.main)
     release_commit = release_changelog(repo, version)
-    repo.create_tag(str(version), ref=release_commit.hexsha)
+    repo.create_tag(str(version), ref=release_commit.hexsha, message=f"release {version}")
     repo.git.push(upstream.name, "HEAD:main")
     repo.git.push(upstream.name, f"refs/tags/{version}")
     create_github_release(version)
@@ -46,7 +46,7 @@ def release_changelog(repo: Repo, version: Version) -> Commit:
     try:
         check_call(["pre-commit", "run", "--files", str(changelog_path)], cwd=str(_ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     except CalledProcessError:
-        print("pre-commit made formatting changes, staging them")  # ruff:ignore[print]
+        check_call(["pre-commit", "run", "--files", str(changelog_path)], cwd=str(_ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     repo.git.add("-A", "--", "docs/changelog.rst", "docs/changelog")
     return repo.index.commit(f"release {version}")
 
